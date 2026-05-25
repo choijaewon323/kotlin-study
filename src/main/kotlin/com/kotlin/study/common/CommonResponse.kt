@@ -2,16 +2,16 @@ package com.kotlin.study.common
 
 data class CommonResponse<T>(
     val status: String,
-    val message: String? = null,
-    val data: T? = null
+    val message: String?,
+    val data: T?
 ) {
     companion object {
-        fun <T> success(data: T): CommonResponse<T> {
-            return CommonResponse("success", data = data)
+        fun <T> success(data: T?): CommonResponse<T> {
+            return CommonResponse("success", null, data)
         }
 
-        fun fail(exception: Exception): CommonResponse<Any> {
-            return CommonResponse("error", message = exception.message)
+        fun fail(error: Exception): CommonResponse<String> {
+            return CommonResponse("error", error.message, null)
         }
     }
 }
