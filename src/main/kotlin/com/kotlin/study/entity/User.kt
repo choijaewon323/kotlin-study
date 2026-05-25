@@ -10,7 +10,9 @@ import jakarta.persistence.Table
 @Table(name = "users")
 class User(
     name: String,
-    phoneNumber: String
+    phoneNumber: String,
+    lat: Double = 0.0,
+    lng: Double = 0.0,
 ) {
     @Id @GeneratedValue
     @Column(name = "user_id")
@@ -20,4 +22,8 @@ class User(
 
     @Column(name = "phone_number")
     var phoneNumber: String? = phoneNumber
+
+    var lat: Double? = lat
+
+    var lng: Double? = lng
 }

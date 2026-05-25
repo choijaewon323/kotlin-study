@@ -2,14 +2,11 @@ package com.kotlin.study.controller
 
 import com.kotlin.study.common.CommonResponse
 import com.kotlin.study.controller.dto.UserCreateRequestDTO
+import com.kotlin.study.controller.dto.UserLocationResponseDTO
+import com.kotlin.study.controller.dto.UserLocationUpdateRequestDTO
 import com.kotlin.study.controller.dto.UserResponseDTO
 import com.kotlin.study.service.UserService
-import org.springframework.http.ResponseEntity
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.bind.annotation.*
 
 @RestController
 @RequestMapping("/api/v1/user")
@@ -28,5 +25,19 @@ class UserController(
         val results = userService.findAll()
 
         return CommonResponse.success(results)
+    }
+
+    @GetMapping("/location/{groupId}")
+    fun findUserLocationsInGroup(@PathVariable groupId: Long): CommonResponse<UserLocationResponseDTO> {
+        val result = userService.findUserLocationsInGroup(groupId)
+
+        return CommonResponse.success(result)
+    }
+
+    @PutMapping("/location")
+    fun updateLocation(@RequestBody requestDTO: UserLocationUpdateRequestDTO): CommonResponse<Boolean> {
+        userService.updateLocation(requestDTO.userId, requestDTO.lat, requestDTO.lng)
+
+        return CommonResponse.success(true)
     }
 }

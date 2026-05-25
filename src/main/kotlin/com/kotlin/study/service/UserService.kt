@@ -1,6 +1,8 @@
 package com.kotlin.study.service
 
 import com.kotlin.study.controller.dto.UserCreateRequestDTO
+import com.kotlin.study.controller.dto.UserLocationDTO
+import com.kotlin.study.controller.dto.UserLocationResponseDTO
 import com.kotlin.study.controller.dto.UserResponseDTO
 import com.kotlin.study.entity.User
 import com.kotlin.study.repository.UserRepository
@@ -58,5 +60,31 @@ class UserService(
     @Transactional(readOnly = true)
     fun findOne(userId: Long): User {
         return userRepository.findByIdOrNull(userId) ?: throw IllegalStateException("user not found")
+    }
+
+    fun updateLocation(userId: Long, lat: Double, lng: Double) {
+        val user = (userRepository.findByIdOrNull(userId)
+            ?: throw IllegalStateException("user not found"))
+
+        user.lat = lat
+        user.lng = lng
+
+        userRepository.save(user)
+    }
+
+    fun findUserLocationsInGroup(groupId: Long): UserLocationResponseDTO {
+        val results = userRepository.findByGroupId(groupId)
+            .map { user ->
+                val name = requireNotNull(user.name)
+                val lat = user.lat
+                val lng = user.lng
+
+                UserLocationDTO(name, lat, lng)
+            }
+
+        return UserLocationResponseDTO(
+            groupId,
+            results
+        )
     }
 }
