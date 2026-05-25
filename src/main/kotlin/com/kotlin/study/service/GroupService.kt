@@ -31,20 +31,23 @@ class GroupService(
         check(savedGroup != null)
         val savedGroupId = requireNotNull(savedGroup.id)
 
-        userGroupMappingRepository.save(UserGroupMapping(
-            groupDTO.createdUserId,
-            savedGroupId,
-            UserStatus.ADMIN
-        ))
+        userGroupMappingRepository.save(
+            UserGroupMapping(
+                groupDTO.createdUserId,
+                savedGroupId,
+                UserStatus.ADMIN
+            )
+        )
     }
 
     fun join(groupDTO: GroupJoinRequestDTO): Boolean {
-        val savedGroup = groupRepository.findByIdOrNull(groupDTO.groupId) ?: throw IllegalStateException("group is not found")
+        val savedGroup = groupRepository.findByIdOrNull(groupDTO.groupId)
+            ?: throw IllegalStateException("group is not found")
         val groupLimit = requireNotNull(savedGroup.limit)
 
         val exist = userGroupMappingRepository.findByUserIdAndGroupId(groupDTO.userId, groupDTO.groupId)
 
-        check (exist == null) { "user is already joined" }
+        check(exist == null) { "user is already joined" }
 
         val result = AtomicBoolean(false)
 
@@ -63,7 +66,13 @@ class GroupService(
 
             userService.findAllByGroupId(groupDTO.groupId)
                 .forEach { user ->
-                    smsMessageQueue.insert(SMSMessageRequestDTO("010-0000-0000", user.phoneNumber!!, "${newUser.name} 님이 입장하셨습니다."))
+                    smsMessageQueue.insert(
+                        SMSMessageRequestDTO(
+                            "010-0000-0000",
+                            user.phoneNumber!!,
+                            "${newUser.name} 님이 입장하셨습니다."
+                        )
+                    )
                 }
         }
 
@@ -80,6 +89,39 @@ class GroupService(
     fun findAllJoinedGroup(userId: Long): List<GroupResponseDTO> {
         return groupRepository.findAllByUserId(userId)
             .map(this::toResponseDTO)
+    }
+
+    fun leaveOrDeleteGroup(userId: Long, groupId: Long) {
+        val existGroup = groupRepository.findByIdOrNull(groupId)
+            ?: throw IllegalStateException("group is not found")
+        val existInGroup = userGroupMappingRepository.findByUserIdAndGroupId(userId, groupId)
+            ?: throw IllegalStateException("user is not in group")
+
+        val userStatus = requireNotNull(existInGroup.userStatus)
+        val usersInGroup = userService.findAllByGroupId(groupId)
+        userGroupMappingRepository.deleteAllByGroupId(groupId)
+
+        if (userStatus == UserStatus.ADMIN.name) {
+            groupRepository.deleteById(existGroup.id!!)
+        }
+
+        val leaveUser = userService.findOne(userId)
+
+        val message = if (userStatus == UserStatus.ADMIN.name) {
+            "${existGroup.name} 그룹이 삭제되었습니다"
+        } else {
+            "${leaveUser.name}님이 그룹에서 나갔습니다."
+        }
+
+        usersInGroup.forEach {
+            smsMessageQueue.insert(
+                SMSMessageRequestDTO(
+                    "010-0000-0000",
+                    it.phoneNumber!!,
+                    message
+                )
+            )
+        }
     }
 
     private fun toResponseDTO(group: Group): GroupResponseDTO {

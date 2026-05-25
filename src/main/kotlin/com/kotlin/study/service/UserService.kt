@@ -32,11 +32,9 @@ class UserService(
 
     fun create(userDTO: UserCreateRequestDTO) {
         val existUser: User? = userRepository.findByPhoneNumber(userDTO.phoneNumber)
-
         check(existUser == null) { "user already exists" }
 
         val savedUser: User? = userRepository.save(User(userDTO.name, userDTO.phoneNumber))
-
         check(savedUser != null) { "failed to create new user" }
     }
 

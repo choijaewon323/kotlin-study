@@ -48,6 +48,7 @@ class SMSConsumer(
 
                 if (!responseEntity.statusCode.is2xxSuccessful) {
                     log.warn("SMS Consumer Error: ${responseEntity.statusCode}")
+                    smsMessageQueue.insertFailedMessage(element)
                 }
 
                 element = smsMessageQueue.getOne()
